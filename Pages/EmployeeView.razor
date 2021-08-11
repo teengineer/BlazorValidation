@@ -1,0 +1,185 @@
+﻿@inherits EmployeeViewPageModel
+@page "/Personel"
+@inject IJSRuntime JsRuntime
+
+
+@code {
+    public Validation validation;
+
+    protected override void OnInitialized()
+    {
+        validation = new Validation(JsRuntime);
+    }
+
+    private void ValidationForm()
+    {
+        var result = validation.ValidationForm(Model);
+        if (result) OnSaveClick();
+    }
+}
+
+<div class="card">
+    <div class="card-body">
+        <RadzenTabs>
+            <Tabs>
+                @*Genel Bilgiler*@
+                <RadzenTabsItem Text="Genel Bilgileri">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-4 col-sm-12">
+                            <!-- Kodu -->
+                            <div class="form-group row m-1">
+                                <RadzenLabel Text="Kodu" Style="margin-bottom:5px;" class="col-md-3 col-sm-12 col-lg-3 col-form-label" />
+                                <div class="col-md-9 col-sm-12 col-lg-9">
+                                    <RadzenTextBox Placeholder="Kodu Giriniz" Name="fieldShortCode" @bind-Value="@Model.Code" class="form-control" />
+                                    <div id="ShortCode" class="text-danger" style="display:none;">@Model.ValidationMessage</div>
+                                </div>
+                            </div>
+                            <!-- Kodu -->
+                            <!--Adı-->
+                            <div class="form-group row m-1">
+                                <RadzenLabel Text="Adı" class="col-md-3 col-sm-12 col-lg-3 col-form-label" />
+                                <div class="col-md-9 col-sm-12 col-lg-9">
+                                    <RadzenTextBox Placeholder="İsim Giriniz" Name="fieldName" @bind-Value="@Model.Name" class="form-control" />
+                                    <div id="Name" class="text-danger" style="display:none;">@Model.ValidationMessage</div>
+
+                                </div>
+                            </div>
+                            <!--Adı-->
+                            <!--Soyadı-->
+                            <div class="form-group row m-1">
+                                <RadzenLabel Text="Soyadı" class="col-md-3 col-sm-12 col-lg-3 col-form-label" />
+                                <div class="col-md-9 col-sm-12 col-lg-9">
+                                    <RadzenTextBox Placeholder="Soyisim Giriniz" Name="fieldSurname" @bind-Value="@Model.Surname" class="form-control" />
+                                    <div id="Surname" class="text-danger" style="display:none;">@Model.ValidationMessage</div>
+                                </div>
+                            </div>
+                            <!--Soyadı-->
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+                @*Genel Bilgiler*@
+                @*Eğitim*@
+                <RadzenTabsItem Text="Eğitimler">
+                    <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add" Click="@InsertTrainingRow" />
+                    <RadzenDataGrid @ref="trainingsGrid"
+                                    AllowFiltering="true"
+                                    AllowPaging="true"
+                                    PageSize="10"
+                                    AllowSorting="true"
+                                    EditMode="DataGridEditMode.Single"
+                                    Data="@Model.EmployeeTrainings"
+                                    TItem="EmployeeTraining"
+                                    RowUpdate="@OnUpdateTrainingRow"
+                                    RowCreate="@OnCreateTrainingRow"
+                                    AllowColumnResize="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    EmptyText="Gösterilecek kayıt yok">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="EmployeeTraining" Property="Subject" Title="Konu">
+                                <Template Context="employeeTraining">
+                                    @employeeTraining.Subject
+                                </Template>
+                                <EditTemplate Context="employeeTraining">
+                                    <RadzenTextBox @bind-Value="employeeTraining.Subject" Style="width:100%" />
+                                    <div id="Subject_@employeeTraining.Guid" class="text-danger" style="display:none;">@Model.ValidationMessage</div>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="EmployeeTraining" Property="Description" Title="Açıklama">
+                                <Template Context="employeeTraining">
+                                    @employeeTraining.Description
+                                </Template>
+                                <EditTemplate Context="employeeTraining">
+                                    <RadzenTextBox @bind-Value="employeeTraining.Description" Style="width:100%" />
+                                    <div id="Description_@employeeTraining.Guid" class="text-danger" style="display:none;">@Model.ValidationMessage</div>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="EmployeeTraining" Context="sampleBlazorModelsSampleOrder" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Title="İşlemler">
+                                <Template Context="employeeTraining">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditTrainingRow(employeeTraining))" @onclick:stopPropagation="true">
+                                    </RadzenButton>
+                                </Template>
+                                <EditTemplate Context="employeeTraining">
+                                    <RadzenButton Icon="save" Size="ButtonSize.Small" Click="@((args) => SaveTrainingRow(employeeTraining))">
+                                    </RadzenButton>
+                                    <RadzenButton Icon="cancel" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Click="@((args) => CancelTrainingEdit(employeeTraining))">
+                                    </RadzenButton>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="EmployeeTraining" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Title="Sil">
+                                <Template Context="employeeTraining">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteTrainingRow(employeeTraining))" @onclick:stopPropagation="true">
+                                    </RadzenButton>
+                                </Template>
+                                <EditTemplate Context="employeeTraining">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="close" Size="ButtonSize.Small" Click="@(args => DeleteTrainingRow(employeeTraining))">
+                                    </RadzenButton>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                    @code {
+                        RadzenDataGrid<EmployeeTraining> trainingsGrid;
+                        List<EmployeeTraining> employeeTrainings;
+
+                        void EditTrainingRow(EmployeeTraining employeeTraining)
+                        {
+                            trainingsGrid.EditRow(employeeTraining);
+                        }
+
+                        void OnUpdateTrainingRow(EmployeeTraining employeeTraining)
+                        {
+                            Model.EmployeeTrainings.Remove(Model.EmployeeTrainings.Where(x => x.Id == employeeTraining.Id).FirstOrDefault());
+                            Model.EmployeeTrainings.Add(employeeTraining);
+                        }
+
+                        void SaveTrainingRow(EmployeeTraining employeeTraining)
+                        {
+                            if (!validation.ValidationGrid(employeeTraining, employeeTraining.Guid)) return;
+                            trainingsGrid.UpdateRow(employeeTraining);
+                        }
+
+                        void CancelTrainingEdit(EmployeeTraining employeeTraining)
+                        {
+                            trainingsGrid.CancelEditRow(employeeTraining);
+                        }
+
+                        void DeleteTrainingRow(EmployeeTraining employeeTraining)
+                        {
+                            if (Model.EmployeeTrainings.Contains(employeeTraining))
+                            {
+                                Model.EmployeeTrainings.Remove(employeeTraining);
+
+                                trainingsGrid.Reload();
+                            }
+                            else
+                            {
+                                trainingsGrid.CancelEditRow(employeeTraining);
+                            }
+                        }
+
+                        void InsertTrainingRow()
+                        {
+                            employeeTrainings = Model.EmployeeTrainings.ToList();
+
+                            trainingsGrid.InsertRow(new EmployeeTraining());
+                        }
+
+                        void OnCreateTrainingRow(EmployeeTraining employeeTraining)
+                        {
+                            Model.EmployeeTrainings.Add(employeeTraining);
+                        }
+                    }
+                </RadzenTabsItem>
+                @*Eğitim*@
+            </Tabs>
+        </RadzenTabs>
+    </div>
+</div>
+<div class="col-md-4">
+    <RadzenButton Icon="save"
+                  Text="Kaydet"
+                  Click=@(args => ValidationForm())
+                  ButtonStyle="ButtonStyle.Secondary"
+                  ButtonType="ButtonType.Button"
+                  class="m-1 module-back-color" />
+</div>
